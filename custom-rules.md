@@ -2,6 +2,8 @@
 
 Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests, where Wazuh's default rules alerted on the outcome but not on the method. The before and after results are in [`detections.md`](detections.md).
 
+Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 4-7 · ⚪ 0-3.
+
 ## Summary
 
 | Rule | Level | Detects | MITRE | Closes the gap in |
@@ -58,7 +60,9 @@ Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests,
 - **Why three strings:** one string alone would be too noisy, so the rule requires the library, the object type and the save call together.
 - **Limits:** it only recognizes this library. Account creation through ADSI or other APIs would not match, and legitimate admin scripts that use the library could trigger it.
 
-<!-- ![Alert 100101 in detail](screenshots/rule-100101-alert-detail.png) -->
+![Alert 100101 in detail](screenshots/rule-100101-alert-detail.png)
+
+![Script block lines matched by rule 100101: UserPrincipal and Save()](screenshots/rule-100101-script-detail.png)
 
 ---
 
@@ -80,8 +84,9 @@ Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests,
 - **Level 8:** lower than the others, because administrators use this cmdlet regularly.
 - **False-positive check:** running `Get-ScheduledTask` in a new PowerShell session produced no new 100102 alerts (count 2 before and after).
 - **Limits:** legitimate scheduled task registration will trigger it, so in a real environment it would need exclusions for known admin hosts or accounts.
+- **Evasion:** the `__cmdletization` exclusion means an attacker who includes that string in a script block would avoid the rule. A stricter approach would exclude only the module's exact generated code.
 
-<!-- ![Alert 100102 in detail](screenshots/rule-100102-alert-detail.png) -->
+![Alert 100102 in detail](screenshots/rule-100102-alert-detail.png) 
 
 ---
 
@@ -102,7 +107,7 @@ Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests,
 - **Level 10:** creating a task through the WMI class directly is unusual in normal administration.
 - **Limits:** other WMI methods of registering a task, or a command split across several script blocks, would not match.
 
-<!-- ![Alert 103 in detail](screenshots/rule-100103-alert-detail.png) -->
+![Alert 100103 in detail](screenshots/rule-100103-alert-detail.png)
 
 ---
 
@@ -111,4 +116,4 @@ Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests,
 1. Deploy the rule as described above.
 2. Run the matching Atomic Red Team test and search the dashboard for the rule ID, or check the server log: `sudo grep '"id":"100100"' /var/ossec/logs/alerts/alerts.json`.
 
-The dashboard's Ruleset Test is not enough on its own. It decodes pasted JSON with the generic `json` decoder, so a rule can pass it and still fail on real agent events. My first version of rule 100100 did exactly that, because it was written without a parent rule.
+The dashboard's Ruleset Test is not enough on its own. It decodes pasted JSON with the generic `json` decoder, so a rule can pass it and still fail on real agent events. An early version of rule 100100 did exactly that: it matched the sample but never fired on real events, because it was not a child of the built-in PowerShell script block rule (91802).
