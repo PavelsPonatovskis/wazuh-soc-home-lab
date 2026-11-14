@@ -1,10 +1,10 @@
-# Custom detection rules
+# 🧩 Custom detection rules
 
 Four custom Wazuh rules. Each one closes a gap found with Atomic Red Team tests, where Wazuh's default rules alerted on the outcome but not on the method. The before and after results are in [`detections.md`](detections.md).
 
 Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 4-7 · ⚪ 0-3.
 
-## Summary
+## 📋 Summary
 
 | Rule | Level | Detects | MITRE | Closes the gap in |
 |:---:|:---:|:---|:---:|:---:|
@@ -13,7 +13,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 | [100102](#100102-register-scheduledtask) | 🟠 8 | `Register-ScheduledTask` in a PowerShell script block | T1053.005 | T1053.005-4 |
 | [100103](#100103-wmi-scheduled-task) | 🟠 10 | Scheduled task registration through WMI (`PS_ScheduledTask`, `RegisterByXml`) | T1053.005 | T1053.005-6 |
 
-## How the rules work
+## ⚙️ How the rules work
 
 - They use PowerShell **script block logging** (Windows Event ID 4104), which records the code PowerShell runs, including code downloaded and run in memory.
 - All four are **children of built-in rule 91802**, which handles PowerShell script block events (`<if_sid>91802</if_sid>`). I found it by reading the `if_sid` of a built-in rule that matches these events (91837), using `sudo grep -rn -B3 -A12 'id="91837"' /var/ossec/ruleset/rules/`.
@@ -22,7 +22,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 
 ---
 
-## 100100: `New-LocalUser`
+## ❗ 100100: `New-LocalUser`
 
 ```xml
 <rule id="100100" level="10">
@@ -43,7 +43,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 
 ---
 
-## 100101: .NET AccountManagement
+## ❗ 100101: .NET AccountManagement
 
 ```xml
 <rule id="100101" level="10">
@@ -66,7 +66,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 
 ---
 
-## 100102: `Register-ScheduledTask`
+## ❗ 100102: `Register-ScheduledTask`
 
 ```xml
 <rule id="100102" level="8">
@@ -90,7 +90,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 
 ---
 
-## 100103: WMI scheduled task
+## ❗ 100103: WMI scheduled task
 
 ```xml
 <rule id="100103" level="10">
@@ -111,7 +111,7 @@ Level markers are the same as in `detections.md`: 🔴 12+ · 🟠 8-11 · 🟡 
 
 ---
 
-## Testing a rule
+## 🧪 Testing a rule
 
 1. Deploy the rule as described above.
 2. Run the matching Atomic Red Team test and search the dashboard for the rule ID, or check the server log: `sudo grep '"id":"100100"' /var/ossec/logs/alerts/alerts.json`.
