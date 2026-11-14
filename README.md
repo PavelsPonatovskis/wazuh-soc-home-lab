@@ -1,5 +1,5 @@
-# 🛡️ Wazuh-soc-home-lab
-Home SOC lab with Wazuh SIEM and Sysmon: attack simulation (Atomic Red Team), custom detection rules, MITRE ATT&amp;CK mapping and incident report
+# 🛡️ Wazuh SOC Home Lab
+Home SOC lab with Wazuh SIEM and Sysmon: attack simulation (Atomic Red Team), custom detection rules, MITRE ATT&CK mapping and incident report
 
 ![Wazuh](https://img.shields.io/badge/Wazuh-005571?style=for-the-badge&logo=wazuh&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
@@ -23,52 +23,55 @@ Home SOC lab with Wazuh SIEM and Sysmon: attack simulation (Atomic Red Team), cu
 |:---:|:---:|
 | Hypervisor | VirtualBox on Windows |
 | Network | Isolated NAT Network (`LabNet`, 10.10.10.0/24), no access from the home LAN |
-| SIEM | Wazuh [version] all-in-one (manager, indexer, dashboard) on Ubuntu Server 22.04 |
+| SIEM | Wazuh v4.14.9 all-in-one (manager, indexer, dashboard) on Ubuntu Server 22.04 |
 | Endpoint | Windows 11 Enterprise (evaluation) with Sysmon (SwiftOnSecurity config) and the Wazuh agent |
 | Extra logging | PowerShell script block logging (Event ID 4104), Windows audit policies |
 | Attack simulation | Atomic Red Team (run directly on the Windows endpoint) |
 
 ## 📊 Results
-I ran 7 Atomic Red Team tests across two MITRE ATT&CK techniques. "Detected" means an alert identified the technique or method itself, and "Partially" means only the outcome was alerted.
+I ran 7 Atomic Red Team tests across two MITRE ATT&CK techniques. ✅ means an alert identified the technique or method itself, and ⚠️ means only the outcome was alerted.
 
-| Technique | Test | Before custom rules | After |
+| Technique | Test | Without custom rules | With custom rules |
 |:---:|:---:|:---:|:---:|
-| T1136.001 Create Account | `net user` (cmd) | Detected (92040, level 12) | n/a |
-| T1136.001 Create Account | PowerShell `New-LocalUser` | Partially (outcome only) | Detected, rule 100100 |
-| T1136.001 Create Account | Admin via `net user` | Detected (92040, 60154) | n/a |
-| T1136.001 Create Account | .NET AccountManagement | Partially (outcome only) | Detected, rule 100101 |
-| T1053.005 Scheduled Task | `schtasks` | Detected, low severity (level 3-4) | n/a |
-| T1053.005 Scheduled Task | `Register-ScheduledTask` | Partially (level 4) | Detected, rule 100102 |
-| T1053.005 Scheduled Task | WMI `RegisterByXml` | Partially (level 4) | Detected, rule 100103 |
+| T1136.001 Create Account | `net user` (cmd) | ✅ Detected (92040, level 12) | n/a |
+| T1136.001 Create Account | PowerShell `New-LocalUser` | ⚠️ Partially (outcome only) | ✅ Detected (rule 100100) |
+| T1136.001 Create Account | Admin via `net user` | ✅ Detected (92040, 60154) | n/a |
+| T1136.001 Create Account | .NET AccountManagement | ⚠️ Partially (outcome only) | ✅ Detected (rule 100101) |
+| T1053.005 Scheduled Task | `schtasks` | ✅ Detected, low severity (level 3-4) | n/a |
+| T1053.005 Scheduled Task | `Register-ScheduledTask` | ⚠️ Partially (level 4) | ✅ Detected (rule 100102) |
+| T1053.005 Scheduled Task | WMI `RegisterByXml` | ⚠️ Partially (level 4) | ✅ Detected (rule 100103) |
 
-Full details are in [`detections.md`](detections.md).
+## 📁 Repository contents
+- [`detections.md`](detections.md): full results for every test, with screenshots
+- [`custom-rules.md`](custom-rules.md): the four custom rules, with code and alert screenshots
+- [`incident-report.md`](incident-report.md): a simulated incident report
 
-## 📏 Custom rules
-Four custom rules in [`custom-rules.md`](custom-rules.md):
+## 🧩 Custom rules
+Four custom rules, with their code, logic, limits and alert screenshots, in [`custom-rules.md`](custom-rules.md):
+
 | Rule | Level | Detects |
 |:---:|:---:|:---|
-| 100100 | 10 | PowerShell `New-LocalUser` in script blocks |
-| 100101 | 10 | Local account creation through .NET `UserPrincipal` |
-| 100102 | 8 | `Register-ScheduledTask` in script blocks (excludes the module's own code) |
-| 100103 | 10 | Scheduled task creation through WMI `PS_ScheduledTask` / `RegisterByXml` |
+| 100100 | 🟠 10 | PowerShell `New-LocalUser` in script blocks |
+| 100101 | 🟠 10 | Local account creation through .NET `UserPrincipal` |
+| 100102 | 🟠 8 | `Register-ScheduledTask` in script blocks (excludes the module's own code) |
+| 100103 | 🟠 10 | Scheduled task creation through WMI `PS_ScheduledTask` / `RegisterByXml` |
 
-## 💼 Case studies and incident report
-- [Case study: PowerShell account creation](case-studies/) [add links when files exist]
-- [Case study: .NET account creation](case-studies/)
-- [Case study: scheduled tasks](case-studies/)
-- [Incident report: unauthorized local administrator](incident-reports/)
+## 🚨 Incident report
+[Incident report: unauthorized local administrator](incident-report.md), a simulated incident based on test T1136.001-9, with timeline, IOCs, severity and response steps.
 
 ## 🧠 What I learned
 - Windows logging and SIEM detection are different: an event can be recorded without any alert.
 - A rule that passes the Wazuh Ruleset Test can still fail on real events. Pasted JSON is decoded differently from agent events, and custom rules often need to be children (`if_sid`) of a built-in rule.
 - One attack produces a chain of alerts. The analyst's job is to separate the alert that identifies the technique from the supporting evidence.
-- Built-in rules are noisy in places: a level 15 alert (92213) fired on PowerShell's own temp file in every PowerShell test.
+- Built-in rules are noisy in places: the test framework triggered two false positives, 92213 (level 15, PowerShell's own temp file) and 91822 (level 12, the framework's own code), which would waste analyst time in a real SOC until tuned.
 - Detecting the method is harder than detecting the outcome, and every added rule needs a false-positive check.
 
 ## ⚠️ Limitations
 - Single Windows endpoint, no Linux or network telemetry yet.
 - Rules match specific strings, so obfuscated variants would likely evade them.
 - Tests ran with Defender real-time protection off in an isolated lab, so they say nothing about endpoint protection.
+- The custom rules depend on PowerShell script block logging being enabled on the endpoint.
+- The tests are single runs of fixed, well-known commands, so the detection results show what each rule catches, not how it holds up against varied or obfuscated attacks.
 
 ## ⏭️ Next steps
 - Python script to enrich alerts with threat intelligence lookups
