@@ -17,7 +17,7 @@ Home SOC lab with Wazuh SIEM and Sysmon: attack simulation (Atomic Red Team), cu
 - Practice investigating alerts and writing an incident report
 
 ## ⚙️ Architecture
-<img width="900" height="520" alt="architecture" src="https://github.com/user-attachments/assets/8070297c-d7cc-4fb9-8237-a1c2442a546f" />
+<img width="1800" height="1080" alt="image" src="https://github.com/user-attachments/assets/1c60b773-28ee-48d6-b9aa-beceac154a70" />
 
 | Component | Details |
 |:---:|:---:|
