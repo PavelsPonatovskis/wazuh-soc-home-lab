@@ -44,7 +44,7 @@ I ran 7 Atomic Red Team tests across two MITRE ATT&CK techniques. "Detected" mea
 Full details are in [`detections.md`](detections.md).
 
 ## 📏 Custom rules
-Four custom rules in [`rules/local_rules.xml`](rules/local_rules.xml):
+Four custom rules in [`custom-rules.md`](custom-rules.md):
 | Rule | Level | Detects |
 |:---:|:---:|:---|
 | 100100 | 10 | PowerShell `New-LocalUser` in script blocks |
